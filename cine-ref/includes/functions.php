@@ -1,4 +1,12 @@
 <?php
+// includes/functions.php
+require_once 'config.php';
+
+// Ya no necesitamos db.php ni session_start para auth de servidor, 
+// pero mantenemos functions por si necesitamos cosas de API en el servidor (aunque idealmente todo iría a JS)
+
+// --- Mock Data y API (Server Side Rendering for SEO/Initial Load) ---
+// Aun usamos esto para pintar el index.php rápido antes de cargar JS
 function conectarApi($ruta, $parametros = []) {
     $url = URL_API . $ruta . '?api_key=' . CLAVE_API . '&language=es-ES';
     
@@ -24,36 +32,11 @@ function obtenerPopulares() {
     return conectarApi('/movie/popular', ['page' => 1]);
 }
 
+function buscarPeliculas($query) {
+    return conectarApi('/search/movie', ['query' => $query]);
+}
+
 function obtenerDetalle($id) {
     return conectarApi('/movie/' . $id);
-}
-
-function obtenerColecciones() {
-    return [
-        [
-            'id' => 1,
-            'titulo' => 'Esenciales Cinefilo',
-            'descripcion' => 'Lista imprescindible de películas.',
-            'cantidad_peliculas' => 3,
-            'autor' => 'Alex'
-        ]
-    ];
-}
-
-function obtenerColeccion($id) {
-    if ($id == 1) {
-        return [
-            'id' => 1,
-            'titulo' => 'Esenciales Cinefilo',
-            'descripcion' => 'Lista imprescindible de películas.',
-            'autor' => 'Alex',
-            'peliculas' => [
-                ['id' => 550, 'title' => 'Fight Club', 'poster_path' => '/pB8BM7pdSp6B6Ih7Qf4n6a8mi75.jpg'],
-                ['id' => 27205, 'title' => 'Inception', 'poster_path' => '/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'],
-                ['id' => 157336, 'title' => 'Interstellar', 'poster_path' => '/gEU2QniL6E77NI6lCU6MxlNBvIx.jpg']
-            ]
-        ];
-    }
-    return null;
 }
 ?>
