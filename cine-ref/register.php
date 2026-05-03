@@ -42,8 +42,9 @@ require_once 'includes/header.php';
 </div>
 
 <script type="module">
-    import { auth } from './js/firebase-config.js';
+    import { auth, db } from './js/firebase-config.js';
     import { createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Si ya está logueado, redirigir
     onAuthStateChanged(auth, (user) => {
@@ -84,6 +85,14 @@ require_once 'includes/header.php';
                     displayName: username
                 });
             }
+
+            // Guardar el rol base del usuario en Firestore
+            await setDoc(doc(db, "users", userCredential.user.uid), {
+                uid: userCredential.user.uid,
+                email: email,
+                role: "user",
+                displayName: username || ""
+            });
 
             // Redirección manejada por onAuthStateChanged
         } catch (error) {

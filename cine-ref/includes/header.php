@@ -15,23 +15,35 @@ require_once __DIR__ . '/functions.php';
     
     <!-- Lógica Global de Auth (Firebase) -->
     <script type="module">
-        import { auth } from './js/firebase-config.js';
+        import { auth, db } from './js/firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const navLinks = document.querySelector('.nav-auth-container');
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 // Usuario logueado
                 const inicial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
                 const nombre = user.displayName ? user.displayName : user.email;
                 
+                let adminLink = '';
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'moderator') {
+                        adminLink = `<a href="moderation.php" class="btn btn-oscuro" style="margin-right: 1rem; padding: 0.35rem 0.75rem; font-size: 0.8rem;">Panel Moderador</a>`;
+                    }
+                } catch(e) { console.error("Error fetching user role:", e); }
+
                 navLinks.innerHTML = `
-                    <a href="profile.php" title="Perfil de ${nombre}">
-                        <div class="avatar-peque">
-                            <span style="font-size:0.875rem; font-weight:700;">${inicial}</span>
-                        </div>
-                    </a>
+                    <div style="display: flex; align-items: center;">
+                        ${adminLink}
+                        <a href="profile.php" title="Perfil de ${nombre}">
+                            <div class="avatar-peque">
+                                <span style="font-size:0.875rem; font-weight:700;">${inicial}</span>
+                            </div>
+                        </a>
+                    </div>
                 `;
             } else {
                 // Invitado
