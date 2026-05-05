@@ -41,7 +41,7 @@ require_once 'includes/header.php';
         <div class="flex-between items-center mb-4">
             <h1 class="detalle-titulo mb-0"><?php echo htmlspecialchars($pelicula['title']); ?></h1>
             
-            <button id="btn-fav" class="btn btn-icon-only" title="Añadir a favoritos" style="border-radius:50%; padding:0.75rem;">
+            <button id="btn-fav" class="btn btn-icon-only" title="Añadir a favoritos" style="border-radius:50%; padding:0.75rem;">Favoritos
                 <svg xmlns="http://www.w3.org/2000/svg" class="icono" id="icon-fav" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
@@ -181,12 +181,19 @@ require_once 'includes/header.php';
     btnFav.addEventListener('click', async () => {
         if (!currentUser) return;
 
-        // Optimistic UI update
+        if (!isFav) {
+            const favsSnap = await getDocs(collection(db, "users", currentUser.uid, "favorites"));
+            if (favsSnap.size >= 3) {
+                alert("Solo puedes guardar hasta 3 películas en favoritos.\nElimina una antes de añadir otra.");
+                return;
+            }
+        }
+
         isFav = !isFav;
         updateIcon();
 
         const docRef = doc(db, "users", currentUser.uid, "favorites", movieId);
-        
+
         try {
             if (isFav) {
                 await setDoc(docRef, movieData);
@@ -195,7 +202,6 @@ require_once 'includes/header.php';
             }
         } catch (e) {
             console.error("Error actualizando favorito:", e);
-            // Revertir si falla
             isFav = !isFav;
             updateIcon();
             alert("Hubo un error al actualizar favoritos.");

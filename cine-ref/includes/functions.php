@@ -7,9 +7,10 @@ require_once 'config.php';
 
 // --- Mock Data y API (Server Side Rendering for SEO/Initial Load) ---
 // Aun usamos esto para pintar el index.php rápido antes de cargar JS
-function conectarApi($ruta, $parametros = []) {
+function conectarApi($ruta, $parametros = [])
+{
     $url = URL_API . $ruta . '?api_key=' . CLAVE_API . '&language=es-ES';
-    
+
     foreach ($parametros as $clave => $valor) {
         $url .= '&' . $clave . '=' . urlencode($valor);
     }
@@ -17,32 +18,37 @@ function conectarApi($ruta, $parametros = []) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
     $respuesta = curl_exec($ch);
     $codigo = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($codigo !== 200) return null;
+    if ($codigo !== 200)
+        return null;
 
     return json_decode($respuesta, true);
 }
 
-function obtenerPopulares() {
+function obtenerPopulares()
+{
     return conectarApi('/movie/popular', ['page' => 1]);
 }
 
-function buscarPeliculas($query) {
+function buscarPeliculas($query)
+{
     return conectarApi('/search/movie', ['query' => $query]);
 }
 
-function obtenerDetalle($id) {
+function obtenerDetalle($id)
+{
     return conectarApi('/movie/' . $id);
 }
 
-function obtenerPeliculasInspiradoras() {
+function obtenerPeliculasInspiradoras()
+{
     $ids = [
-        438148, // Dune
+        438631, // Dune
         10315,  // Fantastic Mr. Fox
         545611, // Everything Everywhere All at Once
         376867, // Moonlight
@@ -93,7 +99,7 @@ function obtenerPeliculasInspiradoras() {
         8967,   // The Tree of Life
         361292  // Suspiria (2018)
     ];
-    
+
     $resultados = [];
     foreach ($ids as $id) {
         $detalle = obtenerDetalle($id);
@@ -101,7 +107,11 @@ function obtenerPeliculasInspiradoras() {
             $resultados[] = $detalle;
         }
     }
-    
+
     return ['results' => $resultados];
+}
+function obtenerEstrenos()
+{
+    return conectarApi('/movie/upcoming', ['page' => 1]);
 }
 ?>
