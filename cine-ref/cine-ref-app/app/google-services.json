@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "886403096538",
+    "project_id": "ut5-firestore-alejandro",
+    "storage_bucket": "ut5-firestore-alejandro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:886403096538:android:cea38fd96363e0d6892ae3",
+        "android_client_info": {
+          "package_name": "com.example.filmspo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoDLhIIhf8rODKh1R9K9svvhKjUAIWsAs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
