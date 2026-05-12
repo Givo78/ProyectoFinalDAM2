@@ -101,10 +101,82 @@ require_once 'includes/header.php';
                 <label class="form-label" for="post-image">Imagen</label>
                 <input type="file" id="post-image" accept="image/*" required class="form-input" style="padding: 0.5rem;">
             </div>
+            <div class="form-grupo">
+                <label class="form-label">Diseño del Post</label>
+                <div class="layout-picker" id="layout-picker">
+                    <button type="button" class="layout-option selected" data-layout="classic">
+                        <div class="layout-preview">
+                            <div class="lp-img" style="width:100%; height:55%;"></div>
+                            <div class="lp-lines">
+                                <div class="lp-line"></div>
+                                <div class="lp-line lp-line--short"></div>
+                                <div class="lp-line lp-line--shorter"></div>
+                            </div>
+                        </div>
+                        <span>Clásico</span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="inverted">
+                        <div class="layout-preview">
+                            <div class="lp-lines">
+                                <div class="lp-line"></div>
+                                <div class="lp-line lp-line--short"></div>
+                                <div class="lp-line lp-line--shorter"></div>
+                            </div>
+                            <div class="lp-img" style="width:100%; height:55%;"></div>
+                        </div>
+                        <span>Invertido</span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="side-by-side">
+                        <div class="layout-preview" style="flex-direction:row; gap:4px;">
+                            <div class="lp-img" style="width:42%; height:100%;"></div>
+                            <div class="lp-lines" style="flex:1; justify-content:center;">
+                                <div class="lp-line"></div>
+                                <div class="lp-line lp-line--short"></div>
+                                <div class="lp-line lp-line--shorter"></div>
+                            </div>
+                        </div>
+                        <span>Img + Texto</span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="side-inverted">
+                        <div class="layout-preview" style="flex-direction:row; gap:4px;">
+                            <div class="lp-lines" style="flex:1; justify-content:center;">
+                                <div class="lp-line"></div>
+                                <div class="lp-line lp-line--short"></div>
+                                <div class="lp-line lp-line--shorter"></div>
+                            </div>
+                            <div class="lp-img" style="width:42%; height:100%;"></div>
+                        </div>
+                        <span>Texto + Img</span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="overlay">
+                        <div class="layout-preview" style="position:relative; padding:0; overflow:hidden;">
+                            <div class="lp-img" style="width:100%; height:100%; position:absolute; top:0; left:0;"></div>
+                            <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(255,255,255,0.88); padding:4px 5px; display:flex; flex-direction:column; gap:2px;">
+                                <div class="lp-line" style="background:#000;"></div>
+                                <div class="lp-line lp-line--short" style="background:#555;"></div>
+                            </div>
+                        </div>
+                        <span>Superposición</span>
+                    </button>
+                </div>
+            </div>
             <button type="submit" class="btn btn-blanco" id="btn-submit-post">Subir Post</button>
             <p id="post-msg" class="text-sm mt-2" style="display:none;"></p>
         </form>
     </div>
+
+    <style>
+    .layout-picker { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .layout-option { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; border: 2px solid #000; background: #fff; padding: 0.5rem; box-shadow: 3px 3px 0 #000; transition: all 0.15s; font-family: var(--fuente-principal); font-size: 0.7rem; font-weight: 700; width: 90px; }
+    .layout-option:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #000; }
+    .layout-option.selected { background: var(--color-amarillo); border-color: #000; transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #000; }
+    .layout-preview { width: 72px; height: 52px; border: 1.5px solid #000; display: flex; flex-direction: column; gap: 3px; padding: 4px; background: #f5f5f5; box-sizing: border-box; }
+    .lp-img { background: #bbb; border: 1px solid #999; flex-shrink: 0; }
+    .lp-lines { display: flex; flex-direction: column; gap: 2px; justify-content: flex-start; padding: 2px 0; }
+    .lp-line { height: 3px; background: #333; border-radius: 1px; width: 100%; }
+    .lp-line--short { width: 75%; }
+    .lp-line--shorter { width: 50%; background: #888; }
+    </style>
 
     <div id="posts-container" class="feed-divertido">
         <p class="text-muted" id="loading-posts">Cargando posts...</p>
@@ -230,22 +302,23 @@ require_once 'includes/header.php';
                 const data = docSnap.data();
                 const postId = docSnap.id;
                 
-                // Hash the postId to generate a deterministic random layout
+                // Determine size via hash (for grid placement variety)
                 let hash = 0;
                 for (let i = 0; i < postId.length; i++) {
                     hash = postId.charCodeAt(i) + ((hash << 5) - hash);
                 }
                 hash = Math.abs(hash);
-                
-                const tipos = ['medium', 'large', 'wide']; // We exclude 'small' to ensure text fits
-                const layouts = ['classic', 'inverted', 'side-by-side', 'side-inverted'];
-                
+
+                const tipos = ['medium', 'large', 'wide'];
                 const tipo = tipos[hash % tipos.length];
-                let layout = layouts[(hash % 7) % layouts.length];
-                
-                if (tipo === 'wide') {
-                    layout = (hash % 2 === 0) ? 'side-by-side' : 'side-inverted';
-                }
+
+                // Use the user-chosen layout if saved, otherwise fall back to hash
+                let layout = data.layout || (() => {
+                    const fallbacks = ['classic', 'inverted', 'side-by-side', 'side-inverted'];
+                    return tipo === 'wide'
+                        ? (hash % 2 === 0 ? 'side-by-side' : 'side-inverted')
+                        : fallbacks[(hash % 7) % fallbacks.length];
+                })();
 
                 const postEl = document.createElement('div');
                 postEl.className = `tarjeta-divertida tarjeta-${tipo} layout-${layout}`;
@@ -310,6 +383,16 @@ require_once 'includes/header.php';
         }
     });
 
+    // Layout picker
+    let selectedLayout = 'classic';
+    document.getElementById('layout-picker').addEventListener('click', (e) => {
+        const opt = e.target.closest('.layout-option');
+        if (!opt) return;
+        document.querySelectorAll('.layout-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedLayout = opt.dataset.layout;
+    });
+
     const btnTogglePost = document.getElementById('btn-toggle-post');
     const formContainer = document.getElementById('form-post-container');
     const formPost = document.getElementById('form-post');
@@ -349,6 +432,7 @@ require_once 'includes/header.php';
                 title: title,
                 description: desc,
                 imageUrl: imageUrl,
+                layout: selectedLayout,
                 status: postStatus,
                 createdAt: serverTimestamp()
             });
