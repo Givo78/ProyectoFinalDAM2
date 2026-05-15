@@ -99,30 +99,21 @@ fun PostCard(
             Spacer(Modifier.height(12.dp))
 
             // Título post con borde izquierdo rojo
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 0.dp,
-                        color = Color.Transparent
-                    )
-            ) {
-                Row {
-                    Box(
-                        modifier = Modifier
-                            .width(6.dp)
-                            .height(24.dp)
-                            .background(ColorRojo)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = post.title,
-                        fontFamily = PermanentMarker,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 18.sp,
-                        color = ColorNegro
-                    )
-                }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .width(6.dp)
+                        .height(24.dp)
+                        .background(ColorRojo)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = post.title,
+                    fontFamily = PermanentMarker,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 18.sp,
+                    color = ColorNegro
+                )
             }
 
             Spacer(Modifier.height(8.dp))

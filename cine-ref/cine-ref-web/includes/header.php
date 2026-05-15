@@ -88,5 +88,5 @@ require_once __DIR__ . '/functions.php';
 </nav>
 
 <div class="contenedor-principal">
-    <?php require_once 'sidebar.php'; ?>
-    <main class="contenido-central">
+    <?php if (empty($hideSidebar)) require_once 'sidebar.php'; ?>
+    <main class="contenido-central<?php echo !empty($hideSidebar) ? ' sin-sidebar' : ''; ?>">

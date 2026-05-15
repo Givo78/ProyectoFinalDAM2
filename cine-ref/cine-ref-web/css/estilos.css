@@ -160,10 +160,12 @@ svg.icono, svg#icon-fav { border: none; }
 
 @media (min-width:768px) { .contenedor-principal { flex-direction: row; } }
 
-.contenido-central { 
-    flex: 1; 
-    min-width: 0; 
+.contenido-central {
+    flex: 1;
+    min-width: 0;
 }
+
+.sin-sidebar { max-width: 48rem; margin: 0 auto; }
 
 .contenedor-limitado { 
     max-width: 42rem; 

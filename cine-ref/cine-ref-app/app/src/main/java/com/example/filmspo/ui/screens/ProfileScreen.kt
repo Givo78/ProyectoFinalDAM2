@@ -19,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -257,7 +256,7 @@ fun ProfileScreen(
                     color = ColorNegro,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(ColorAcento)
+                        .background(ColorVerde)
                         .border(3.dp, ColorNegro)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
@@ -290,7 +289,11 @@ fun ProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     state.favorites.forEach { fav ->
-                        Box(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { fav.id.toIntOrNull()?.let { onMovieClick(it) } }
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()

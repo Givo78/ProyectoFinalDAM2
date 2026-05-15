@@ -24,9 +24,9 @@ require_once 'includes/header.php';
 
 <div class="detalle-layout">
     <div class="detalle-poster">
-        <?php 
-        $rutaPoster = $pelicula['poster_path'] 
-            ? URL_IMAGEN . $pelicula['poster_path'] 
+        <?php
+        $rutaPoster = $pelicula['poster_path']
+            ? URL_IMAGEN . $pelicula['poster_path']
             : 'https://via.placeholder.com/500x750?text=No+Image';
         ?>
         <div class="detalle-poster-img">
@@ -40,7 +40,7 @@ require_once 'includes/header.php';
     <div class="detalle-info">
         <div class="flex-between items-center mb-4">
             <h1 class="detalle-titulo mb-0"><?php echo htmlspecialchars($pelicula['title']); ?></h1>
-            
+
             <button id="btn-fav" class="btn btn-icon-only" title="Añadir a favoritos" style="border-radius:50%; padding:0.75rem;">Favoritos
                 <svg xmlns="http://www.w3.org/2000/svg" class="icono" id="icon-fav" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -69,7 +69,7 @@ require_once 'includes/header.php';
                 <?php endif; ?>
             </ul>
         </div>
-        
+
         <div class="mt-8">
             <a href="javascript:history.back()" class="btn btn-oscuro">
                 &larr; Volver
@@ -98,10 +98,22 @@ require_once 'includes/header.php';
                 <textarea id="post-desc" required class="form-input" rows="3" placeholder="¿Qué opinas?"></textarea>
             </div>
             <div class="form-grupo">
-                <label class="form-label" for="post-image">Imagen</label>
-                <input type="file" id="post-image" accept="image/*" required class="form-input" style="padding: 0.5rem;">
+                <label class="form-label">Tipo de contenido</label>
+                <div class="media-type-tabs" id="media-type-tabs">
+                    <button type="button" class="media-tab active" data-type="image">Imagen</button>
+                    <button type="button" class="media-tab" data-type="youtube">Video YouTube</button>
+                    <button type="button" class="media-tab" data-type="text">Solo Texto</button>
+                </div>
             </div>
-            <div class="form-grupo">
+            <div class="form-grupo" id="group-image">
+                <label class="form-label" for="post-image">Imagen</label>
+                <input type="file" id="post-image" accept="image/*" class="form-input" style="padding: 0.5rem;">
+            </div>
+            <div class="form-grupo" id="group-youtube" style="display:none;">
+                <label class="form-label" for="post-youtube">URL de YouTube</label>
+                <input type="text" id="post-youtube" class="form-input" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div class="form-grupo" id="group-layout">
                 <label class="form-label">Diseño del Post</label>
                 <div class="layout-picker" id="layout-picker">
                     <button type="button" class="layout-option selected" data-layout="classic">
@@ -176,10 +188,38 @@ require_once 'includes/header.php';
     .lp-line { height: 3px; background: #333; border-radius: 1px; width: 100%; }
     .lp-line--short { width: 75%; }
     .lp-line--shorter { width: 50%; background: #888; }
+
+    /* Media type tabs */
+    .media-type-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .media-tab { cursor: pointer; border: 2px solid #000; background: #fff; padding: 0.4rem 0.9rem; box-shadow: 3px 3px 0 #000; font-family: var(--fuente-principal); font-size: 0.8rem; font-weight: 700; transition: all 0.15s; }
+    .media-tab:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #000; }
+    .media-tab.active { background: var(--color-amarillo); transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #000; }
+
+    /* YouTube embed — flex: 1 fills remaining card height without overflowing */
+    .yt-embed-wrapper { position: relative; width: 100%; flex: 1 1 0; min-height: 0; background: #000; }
+    .layout-side-by-side .yt-embed-wrapper,
+    .layout-side-inverted .yt-embed-wrapper { width: 40%; flex: 0 0 40%; align-self: stretch; }
+    .yt-embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+    /* Zoomable image cursor */
+    .img-zoomable { cursor: zoom-in; }
+
+    /* Lightbox */
+    #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 9999; align-items: center; justify-content: center; }
+    #lightbox.open { display: flex; }
+    #lightbox-img { max-width: 90vw; max-height: 88vh; object-fit: contain; border: 3px solid #fff; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
+    #lightbox-close { position: absolute; top: 1rem; right: 1.5rem; background: none; border: none; color: #fff; font-size: 2.5rem; line-height: 1; cursor: pointer; font-weight: 700; }
+    #lightbox-close:hover { color: var(--color-amarillo); }
     </style>
 
     <div id="posts-container" class="feed-divertido">
         <p class="text-muted" id="loading-posts">Cargando posts...</p>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" role="dialog" aria-modal="true" aria-label="Imagen ampliada">
+        <button id="lightbox-close" aria-label="Cerrar">&times;</button>
+        <img id="lightbox-img" src="" alt="Imagen ampliada">
     </div>
 </div>
 
@@ -203,7 +243,6 @@ require_once 'includes/header.php';
     let isFav = false;
     let isModerator = false;
 
-    // Verificar auth
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
@@ -213,29 +252,22 @@ require_once 'includes/header.php';
                     isModerator = true;
                 }
             } catch(e) { console.error("Error obteniendo rol", e); }
-            
+
             checkIfFavorite();
             document.getElementById('btn-toggle-post').style.display = 'block';
-            loadPosts(); // Recargar para mostrar botones de borrar si es mod
+            loadPosts();
         } else {
-            // Si no hay user, deshabilitar o redirigir al pulsar
             btnFav.onclick = () => window.location.href = 'login.php';
         }
     });
 
     async function checkIfFavorite() {
         if (!currentUser) return;
-        
         const docRef = doc(db, "users", currentUser.uid, "favorites", movieId);
         try {
             const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                isFav = true;
-                updateIcon();
-            }
-        } catch (e) {
-            console.error("Error comprobando favorito:", e);
-        }
+            if (docSnap.exists()) { isFav = true; updateIcon(); }
+        } catch (e) { console.error("Error comprobando favorito:", e); }
     }
 
     function updateIcon() {
@@ -265,7 +297,6 @@ require_once 'includes/header.php';
         updateIcon();
 
         const docRef = doc(db, "users", currentUser.uid, "favorites", movieId);
-
         try {
             if (isFav) {
                 await setDoc(docRef, movieData);
@@ -280,19 +311,23 @@ require_once 'includes/header.php';
         }
     });
 
-    // Lógica de Posts/Foro
+    function extractYouTubeId(url) {
+        const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+        return match ? match[1] : null;
+    }
+
     async function loadPosts() {
         const postsContainer = document.getElementById('posts-container');
         try {
             const q = query(
-                collection(db, "posts"), 
+                collection(db, "posts"),
                 where("movieId", "==", movieId),
                 where("status", "==", "approved")
             );
             const querySnapshot = await getDocs(q);
-            
+
             postsContainer.innerHTML = '';
-            
+
             if (querySnapshot.empty) {
                 postsContainer.innerHTML = '<p class="text-muted">No hay posts todavía. ¡Sé el primero en comentar!</p>';
                 return;
@@ -301,8 +336,7 @@ require_once 'includes/header.php';
             querySnapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const postId = docSnap.id;
-                
-                // Determine size via hash (for grid placement variety)
+
                 let hash = 0;
                 for (let i = 0; i < postId.length; i++) {
                     hash = postId.charCodeAt(i) + ((hash << 5) - hash);
@@ -312,7 +346,6 @@ require_once 'includes/header.php';
                 const tipos = ['medium', 'large', 'wide'];
                 const tipo = tipos[hash % tipos.length];
 
-                // Use the user-chosen layout if saved, otherwise fall back to hash
                 let layout = data.layout || (() => {
                     const fallbacks = ['classic', 'inverted', 'side-by-side', 'side-inverted'];
                     return tipo === 'wide'
@@ -320,12 +353,26 @@ require_once 'includes/header.php';
                         : fallbacks[(hash % 7) % fallbacks.length];
                 })();
 
+                const mediaType = data.mediaType || 'image';
+
+                // Build media HTML based on type
+                let mediaHtml = '';
+                if (mediaType === 'image' && data.imageUrl) {
+                    mediaHtml = `<img src="${data.imageUrl}" alt="Post image" class="poster-pequeno img-zoomable" title="Clic para ampliar">`;
+                } else if (mediaType === 'youtube' && data.youtubeUrl) {
+                    const videoId = extractYouTubeId(data.youtubeUrl);
+                    if (videoId) {
+                        mediaHtml = `<div class="yt-embed-wrapper"><iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen class="yt-embed"></iframe></div>`;
+                    }
+                }
+
                 const postEl = document.createElement('div');
                 postEl.className = `tarjeta-divertida tarjeta-${tipo} layout-${layout}`;
-                
-                const deleteHtml = isModerator ? `<button class="btn btn-oscuro text-rojo text-sm mt-3 btn-delete-post" data-id="${postId}" data-url="${data.imageUrl}" style="width:100%; border:1px solid var(--color-rojo); background:transparent;">Borrar Post</button>` : '';
 
-                const imgHtml = `<img src="${data.imageUrl}" alt="Post image" class="poster-pequeno">`;
+                const deleteHtml = isModerator
+                    ? `<button class="btn btn-oscuro text-rojo text-sm mt-3 btn-delete-post" data-id="${postId}" data-url="${data.imageUrl || ''}" data-mediatype="${mediaType}" style="width:100%; border:1px solid var(--color-rojo); background:transparent;">Borrar Post</button>`
+                    : '';
+
                 const contentHtml = `
                     <h3 class="titulo-gigante" style="font-size: 1.6rem; margin-bottom: 0.5rem; text-align: left;">${data.title}</h3>
                     <p class="text-sm text-muted mb-3">Por: <span class="text-azul">${data.username}</span></p>
@@ -334,14 +381,17 @@ require_once 'includes/header.php';
                 `;
 
                 let innerHtml = '';
-                if (layout === 'inverted') {
-                    innerHtml = `<div class="contenido-arriba" style="width:100%;">${contentHtml}</div>${imgHtml}`;
+                if (!mediaHtml) {
+                    // Text-only: just content, no media slot
+                    innerHtml = `<div class="contenido-abajo" style="width:100%;">${contentHtml}</div>`;
+                } else if (layout === 'inverted') {
+                    innerHtml = `<div class="contenido-arriba" style="width:100%;">${contentHtml}</div>${mediaHtml}`;
                 } else if (layout === 'side-by-side') {
-                    innerHtml = `${imgHtml}<div class="contenido-lateral" style="flex:1;">${contentHtml}</div>`;
+                    innerHtml = `${mediaHtml}<div class="contenido-lateral" style="flex:1;">${contentHtml}</div>`;
                 } else if (layout === 'side-inverted') {
-                    innerHtml = `<div class="contenido-lateral" style="flex:1;">${contentHtml}</div>${imgHtml}`;
-                } else { // classic
-                    innerHtml = `${imgHtml}<div class="contenido-abajo" style="width:100%;">${contentHtml}</div>`;
+                    innerHtml = `<div class="contenido-lateral" style="flex:1;">${contentHtml}</div>${mediaHtml}`;
+                } else {
+                    innerHtml = `${mediaHtml}<div class="contenido-abajo" style="width:100%;">${contentHtml}</div>`;
                 }
 
                 postEl.innerHTML = innerHtml;
@@ -352,27 +402,38 @@ require_once 'includes/header.php';
             postsContainer.innerHTML = '<p class="text-rojo">Error al cargar el foro.</p>';
         }
     }
-    
+
     loadPosts();
 
     document.getElementById('posts-container').addEventListener('click', async (e) => {
-        if(e.target.classList.contains('btn-delete-post')) {
-            if(!confirm("¿Borrar post definitivamente?")) return;
+        // Lightbox on image click
+        if (e.target.classList.contains('img-zoomable')) {
+            document.getElementById('lightbox-img').src = e.target.src;
+            document.getElementById('lightbox').classList.add('open');
+            return;
+        }
+
+        // Delete post
+        if (e.target.classList.contains('btn-delete-post')) {
+            if (!confirm("¿Borrar post definitivamente?")) return;
             const btn = e.target;
             const id = btn.getAttribute('data-id');
             const url = btn.getAttribute('data-url');
-            
+            const mediaType = btn.getAttribute('data-mediatype');
+
             btn.disabled = true;
             btn.textContent = 'Borrando...';
             try {
                 await deleteDoc(doc(db, "posts", id));
-                try {
-                    const urlObj = new URL(url);
-                    const pathParts = urlObj.pathname.split('/');
-                    const encodedPath = pathParts[pathParts.length - 1];
-                    const actualPath = decodeURIComponent(encodedPath);
-                    await deleteObject(ref(storage, actualPath));
-                } catch(err) { console.log("No se pudo eliminar la imagen", err); }
+                if (mediaType === 'image' && url) {
+                    try {
+                        const urlObj = new URL(url);
+                        const pathParts = urlObj.pathname.split('/');
+                        const encodedPath = pathParts[pathParts.length - 1];
+                        const actualPath = decodeURIComponent(encodedPath);
+                        await deleteObject(ref(storage, actualPath));
+                    } catch(err) { console.log("No se pudo eliminar la imagen", err); }
+                }
                 loadPosts();
             } catch(err) {
                 console.error(err);
@@ -383,6 +444,16 @@ require_once 'includes/header.php';
         }
     });
 
+    // Lightbox close
+    const lightbox = document.getElementById('lightbox');
+    document.getElementById('lightbox-close').addEventListener('click', () => lightbox.classList.remove('open'));
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) lightbox.classList.remove('open');
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') lightbox.classList.remove('open');
+    });
+
     // Layout picker
     let selectedLayout = 'classic';
     document.getElementById('layout-picker').addEventListener('click', (e) => {
@@ -391,6 +462,20 @@ require_once 'includes/header.php';
         document.querySelectorAll('.layout-option').forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected');
         selectedLayout = opt.dataset.layout;
+    });
+
+    // Media type tabs
+    let selectedMediaType = 'image';
+    document.getElementById('media-type-tabs').addEventListener('click', (e) => {
+        const tab = e.target.closest('.media-tab');
+        if (!tab) return;
+        document.querySelectorAll('.media-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        selectedMediaType = tab.dataset.type;
+
+        document.getElementById('group-image').style.display   = selectedMediaType === 'image'   ? 'block' : 'none';
+        document.getElementById('group-youtube').style.display = selectedMediaType === 'youtube' ? 'block' : 'none';
+        document.getElementById('group-layout').style.display  = selectedMediaType === 'text'    ? 'none'  : 'block';
     });
 
     const btnTogglePost = document.getElementById('btn-toggle-post');
@@ -405,25 +490,48 @@ require_once 'includes/header.php';
 
     formPost.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if(!currentUser) return;
+        if (!currentUser) return;
 
         btnSubmitPost.disabled = true;
         btnSubmitPost.textContent = 'Subiendo...';
         msgPost.style.display = 'none';
 
         try {
-            const file = document.getElementById('post-image').files[0];
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
 
-            // 1. Upload Image
-            const ext = file.name.split('.').pop();
-            const filename = `posts/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const storageRef = ref(storage, filename);
-            await uploadBytes(storageRef, file);
-            const imageUrl = await getDownloadURL(storageRef);
+            let imageUrl = '';
+            let youtubeUrl = '';
 
-            // 2. Save Document
+            if (selectedMediaType === 'image') {
+                const file = document.getElementById('post-image').files[0];
+                if (!file) {
+                    msgPost.textContent = "Selecciona una imagen.";
+                    msgPost.className = "text-sm mt-2 text-rojo";
+                    msgPost.style.display = 'block';
+                    btnSubmitPost.disabled = false;
+                    btnSubmitPost.textContent = 'Subir Post';
+                    return;
+                }
+                const ext = file.name.split('.').pop();
+                const filename = `posts/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+                const storageRef = ref(storage, filename);
+                await uploadBytes(storageRef, file);
+                imageUrl = await getDownloadURL(storageRef);
+
+            } else if (selectedMediaType === 'youtube') {
+                const rawUrl = document.getElementById('post-youtube').value.trim();
+                if (!extractYouTubeId(rawUrl)) {
+                    msgPost.textContent = "URL de YouTube no válida.";
+                    msgPost.className = "text-sm mt-2 text-rojo";
+                    msgPost.style.display = 'block';
+                    btnSubmitPost.disabled = false;
+                    btnSubmitPost.textContent = 'Subir Post';
+                    return;
+                }
+                youtubeUrl = rawUrl;
+            }
+
             const postStatus = isModerator ? "approved" : "pending";
             await addDoc(collection(db, "posts"), {
                 movieId: movieId,
@@ -431,8 +539,10 @@ require_once 'includes/header.php';
                 username: currentUser.displayName || currentUser.email,
                 title: title,
                 description: desc,
+                mediaType: selectedMediaType,
                 imageUrl: imageUrl,
-                layout: selectedLayout,
+                youtubeUrl: youtubeUrl,
+                layout: selectedMediaType === 'text' ? 'classic' : selectedLayout,
                 status: postStatus,
                 createdAt: serverTimestamp()
             });
@@ -446,7 +556,7 @@ require_once 'includes/header.php';
             msgPost.className = "text-sm mt-2 text-azul";
             msgPost.style.display = 'block';
             formPost.reset();
-            
+
         } catch (error) {
             console.error("Error al crear post:", error);
             msgPost.textContent = "Error al subir el post.";

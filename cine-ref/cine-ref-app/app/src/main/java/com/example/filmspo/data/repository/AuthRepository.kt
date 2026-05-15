@@ -19,6 +19,7 @@ class AuthRepository {
     suspend fun register(email: String, password: String, name: String): Result<FirebaseUser> = runCatching {
         val result = auth.createUserWithEmailAndPassword(email, password).await()
         val user = result.user ?: error("Error al crear usuario")
+        // Guardamos el nombre en Firebase Auth además de en Firestore
         val profileUpdates = UserProfileChangeRequest.Builder()
             .setDisplayName(name)
             .build()

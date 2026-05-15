@@ -24,10 +24,6 @@ class TMDBRepository {
             .create(TMDBApi::class.java)
     }
 
-    suspend fun getPopular(): List<Movie> = runCatching {
-        api.getPopular().results
-    }.getOrDefault(emptyList())
-
     suspend fun getCuratedMovies(): List<Movie> = runCatching {
         coroutineScope {
             TMDBConfig.CURATED_IDS.map { id ->
@@ -44,11 +40,4 @@ class TMDBRepository {
         api.getDetail(id)
     }.getOrNull()
 
-    suspend fun getUpcoming(): List<Movie> = runCatching {
-        api.getUpcoming().results.take(5)
-    }.getOrDefault(emptyList())
-
-    suspend fun getTopRated(): List<Movie> = runCatching {
-        api.getTopRated().results.take(5)
-    }.getOrDefault(emptyList())
 }

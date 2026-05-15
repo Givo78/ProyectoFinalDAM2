@@ -18,6 +18,7 @@ data class MovieDetailState(
     val posts: List<Post> = emptyList(),
     val isFavorited: Boolean = false,
     val favoritesCount: Int = 0,
+    val isModerator: Boolean = false,
     val isLoading: Boolean = false,
     val isPostLoading: Boolean = false,
     val error: String? = null,
@@ -34,6 +35,7 @@ class MovieDetailViewModel : ViewModel() {
     val state: StateFlow<MovieDetailState> = _state
 
     fun loadMovie(movieId: Int) {
+        // Lanzamos dos corrutinas en paralelo: una para el detalle y otra para los posts
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             val movie = tmdbRepo.getDetail(movieId)
@@ -42,12 +44,16 @@ class MovieDetailViewModel : ViewModel() {
             val uid = authRepo.currentUser?.uid ?: return@launch
             val isFav = firestoreRepo.isFavorite(uid, movieId.toString())
             val favCount = firestoreRepo.getFavorites(uid).size
-            _state.value = _state.value.copy(isFavorited = isFav, favoritesCount = favCount)
+            val user = firestoreRepo.getUser(uid)
+            _state.value = _state.value.copy(
+                isFavorited = isFav,
+                favoritesCount = favCount,
+                isModerator = user?.role == "moderator"
+            )
         }
         viewModelScope.launch {
-            firestoreRepo.getApprovedPostsForMovie(movieId.toString()).collect { posts ->
-                _state.value = _state.value.copy(posts = posts)
-            }
+            val posts = firestoreRepo.getApprovedPostsForMovie(movieId.toString())
+            _state.value = _state.value.copy(posts = posts)
         }
     }
 
@@ -96,19 +102,27 @@ class MovieDetailViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isPostLoading = true, error = null)
             runCatching {
+                // Los moderadores publican directamente sin pasar por revisión
                 val post = Post(
                     movieId = movie.id.toString(),
                     userId = user.uid,
                     username = user.displayName ?: user.email ?: "Usuario",
                     title = title.trim(),
-                    description = description.trim()
+                    description = description.trim(),
+                    status = if (_state.value.isModerator) "approved" else "pending"
                 )
                 firestoreRepo.createPost(post, imageUri)
             }.fold(
                 onSuccess = {
+                    val message = if (_state.value.isModerator)
+                        "Post publicado automáticamente"
+                    else
+                        "Post enviado — pendiente de moderación"
+                    val updatedPosts = firestoreRepo.getApprovedPostsForMovie(movie.id.toString())
                     _state.value = _state.value.copy(
                         isPostLoading = false,
-                        successMessage = "Post enviado — pendiente de moderación"
+                        successMessage = message,
+                        posts = updatedPosts
                     )
                 },
                 onFailure = {
@@ -123,7 +137,11 @@ class MovieDetailViewModel : ViewModel() {
 
     fun deletePost(post: Post) {
         viewModelScope.launch {
-            runCatching { firestoreRepo.deletePost(post.id, post.imageUrl) }
+            runCatching { firestoreRepo.deletePost(post.id, post.imageUrl) }.onSuccess {
+                _state.value = _state.value.copy(
+                    posts = _state.value.posts.filter { it.id != post.id }
+                )
+            }
         }
     }
 

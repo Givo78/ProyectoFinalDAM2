@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -49,6 +50,7 @@ import com.example.filmspo.ui.theme.ColorAcento
 import com.example.filmspo.ui.theme.ColorAmarillo
 import com.example.filmspo.ui.theme.ColorFondo
 import com.example.filmspo.ui.theme.ColorNegro
+import com.example.filmspo.ui.theme.ColorVerde
 import com.example.filmspo.ui.theme.PermanentMarker
 import com.example.filmspo.ui.theme.SpaceGrotesk
 import com.example.filmspo.viewmodel.HomeViewModel
@@ -154,25 +156,51 @@ fun HomeScreen(
         }
 
         if (state.searchQuery.isNotEmpty()) {
-            Text(
-                text = "Resultados para \"${state.searchQuery}\"".uppercase(),
-                fontFamily = PermanentMarker,
-                fontSize = 18.sp,
-                color = ColorNegro,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-        } else {
-            Text(
-                text = "Películas populares",
-                fontFamily = PermanentMarker,
-                fontSize = 22.sp,
-                color = ColorNegro,
+            Box(
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .background(ColorAmarillo)
-                    .border(2.dp, ColorNegro)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            )
+                    .rotate(-1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .offset(x = 4.dp, y = 4.dp)
+                        .background(ColorNegro)
+                )
+                Text(
+                    text = "Resultados: \"${state.searchQuery}\"".uppercase(),
+                    fontFamily = PermanentMarker,
+                    fontSize = 18.sp,
+                    color = ColorNegro,
+                    modifier = Modifier
+                        .background(ColorAmarillo)
+                        .border(3.dp, ColorNegro)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .rotate(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .offset(x = 4.dp, y = 4.dp)
+                        .background(ColorNegro)
+                )
+                Text(
+                    text = "Selección de Inspiración Visual",
+                    fontFamily = PermanentMarker,
+                    fontSize = 22.sp,
+                    color = ColorNegro,
+                    modifier = Modifier
+                        .background(ColorVerde)
+                        .border(3.dp, ColorNegro)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
         }
 
         Spacer(Modifier.height(8.dp))
@@ -223,7 +251,8 @@ fun HomeScreen(
                         MovieCard(
                             movie = movie,
                             onClick = { onMovieClick(movie.id) },
-                            cardBackground = backgrounds[index % backgrounds.size]
+                            cardBackground = backgrounds[index % backgrounds.size],
+                            modifier = Modifier.rotate(if (index % 2 == 0) -1.5f else 1.5f)
                         )
                     }
                 }

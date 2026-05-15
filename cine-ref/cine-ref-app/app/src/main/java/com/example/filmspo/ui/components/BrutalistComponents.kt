@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,7 +27,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.filmspo.ui.theme.ColorAmarillo
-import com.example.filmspo.ui.theme.ColorAcento
 import com.example.filmspo.ui.theme.ColorAzul
 import com.example.filmspo.ui.theme.ColorNegro
 import com.example.filmspo.ui.theme.ColorBlanco
@@ -241,9 +241,10 @@ fun BrutalistSuccess(message: String, modifier: Modifier = Modifier) {
 fun BrutalistTag(
     text: String,
     background: Color = ColorAzul,
+    rotation: Float = 0f,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
+    Box(modifier = modifier.rotate(rotation)) {
         Box(
             modifier = Modifier
                 .matchParentSize()

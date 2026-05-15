@@ -30,6 +30,7 @@ class HomeViewModel : ViewModel() {
 
     init {
         loadCuratedMovies()
+        // Esperamos 400ms sin escritura para lanzar la búsqueda y no saturar la API
         viewModelScope.launch {
             _searchQuery
                 .debounce(400)
@@ -43,7 +44,7 @@ class HomeViewModel : ViewModel() {
     private fun loadCuratedMovies() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
-            val movies = tmdbRepo.getPopular()
+            val movies = tmdbRepo.getCuratedMovies()
             _state.value = _state.value.copy(movies = movies, isLoading = false)
         }
     }

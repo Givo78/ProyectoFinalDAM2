@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -92,15 +91,15 @@ fun MovieDetailScreen(
     }
 
     LaunchedEffect(state.successMessage) {
-        if (state.successMessage != null) {
-            delay(2000)
-            viewModel.clearMessages()
-            if (state.successMessage?.contains("moderación") == true) {
-                postTitle = ""
-                postDescription = ""
-                selectedImageUri = null
-                showForm = false
-            }
+        val msg = state.successMessage ?: return@LaunchedEffect
+        delay(2000)
+        viewModel.clearMessages()
+        // Si el post fue enviado a moderación cerramos el formulario
+        if (msg.contains("moderación")) {
+            postTitle = ""
+            postDescription = ""
+            selectedImageUri = null
+            showForm = false
         }
     }
 
@@ -258,6 +257,7 @@ fun MovieDetailScreen(
                             BrutalistTag(
                                 text = genre.name,
                                 background = if (i % 2 == 0) ColorAzul else ColorVerde,
+                                rotation = if (i % 2 == 0) -2f else 2f,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
@@ -267,28 +267,22 @@ fun MovieDetailScreen(
                 // Sinopsis
                 if (movie.overview.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(width = 0.dp, color = Color.Transparent)
-                    ) {
-                        Row {
-                            Box(
-                                modifier = Modifier
-                                    .width(6.dp)
-                                    .height(80.dp)
-                                    .background(ColorRojo)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = movie.overview,
-                                fontFamily = SpaceGrotesk,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = ColorNegro,
-                                modifier = Modifier.background(Color(0xFFFFF4F7)).padding(8.dp)
-                            )
-                        }
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .width(6.dp)
+                                .height(80.dp)
+                                .background(ColorRojo)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = movie.overview,
+                            fontFamily = SpaceGrotesk,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = ColorNegro,
+                            modifier = Modifier.background(Color(0xFFFFF4F7)).padding(8.dp)
+                        )
                     }
                 }
             }
@@ -467,7 +461,7 @@ fun MovieDetailScreen(
             state.posts.forEach { post ->
                 PostCard(
                     post = post,
-                    canDelete = currentUser?.uid == post.userId,
+                    canDelete = state.isModerator || currentUser?.uid == post.userId,
                     onDelete = { viewModel.deletePost(post) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )

@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/functions.php';
-// Ya no redirigimos con PHP, lo haremos con JS si detectamos sesión
+$hideSidebar = true;
 require_once 'includes/header.php';
 ?>
 

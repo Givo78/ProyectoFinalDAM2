@@ -5,11 +5,7 @@ import com.example.filmspo.data.model.Favorite
 import com.example.filmspo.data.model.Post
 import com.example.filmspo.data.model.User
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepository {
@@ -86,31 +82,29 @@ class FirestoreRepository {
 
     // ── Posts ──────────────────────────────────────────────────────────────────
 
-    fun getApprovedPostsForMovie(movieId: String): Flow<List<Post>> = callbackFlow {
-        val listener = db.collection("posts")
+    suspend fun getApprovedPostsForMovie(movieId: String): List<Post> = runCatching {
+        db.collection("posts")
             .whereEqualTo("movieId", movieId)
             .whereEqualTo("status", "approved")
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
-                val posts = snapshot?.documents?.mapNotNull { doc ->
-                    Post(
-                        id = doc.id,
-                        movieId = doc.getString("movieId") ?: "",
-                        userId = doc.getString("userId") ?: "",
-                        username = doc.getString("username") ?: "",
-                        title = doc.getString("title") ?: "",
-                        description = doc.getString("description") ?: "",
-                        imageUrl = doc.getString("imageUrl") ?: "",
-                        status = doc.getString("status") ?: "approved",
-                        createdAt = doc.getLong("createdAt") ?: 0L
-                    )
-                } ?: emptyList()
-                trySend(posts)
-            }
-        awaitClose { listener.remove() }
-    }
+            .get().await()
+            .documents.mapNotNull { doc ->
+                Post(
+                    id = doc.id,
+                    movieId = doc.getString("movieId") ?: "",
+                    userId = doc.getString("userId") ?: "",
+                    username = doc.getString("username") ?: "",
+                    title = doc.getString("title") ?: "",
+                    description = doc.getString("description") ?: "",
+                    imageUrl = doc.getString("imageUrl") ?: "",
+                    status = doc.getString("status") ?: "approved",
+                    createdAt = doc.getTimestamp("createdAt")?.toDate()?.time
+                        ?: doc.getLong("createdAt") ?: 0L
+                )
+            }.sortedByDescending { it.createdAt }
+    }.getOrDefault(emptyList())
 
     suspend fun createPost(post: Post, imageUri: Uri?) {
+        // Primero subimos la imagen a Storage y guardamos su URL pública en el documento
         var imageUrl = ""
         if (imageUri != null) {
             val ref = storage.reference.child("posts/${System.currentTimeMillis()}_${(Math.random() * 10000).toInt()}.jpg")
@@ -125,7 +119,7 @@ class FirestoreRepository {
                 "title" to post.title,
                 "description" to post.description,
                 "imageUrl" to imageUrl,
-                "status" to "pending",
+                "status" to post.status.ifEmpty { "pending" },
                 "createdAt" to System.currentTimeMillis()
             )
         ).await()
@@ -143,7 +137,6 @@ class FirestoreRepository {
     suspend fun getPendingPosts(): List<Post> = runCatching {
         db.collection("posts")
             .whereEqualTo("status", "pending")
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .get().await()
             .documents.mapNotNull { doc ->
                 Post(
@@ -155,9 +148,10 @@ class FirestoreRepository {
                     description = doc.getString("description") ?: "",
                     imageUrl = doc.getString("imageUrl") ?: "",
                     status = "pending",
-                    createdAt = doc.getLong("createdAt") ?: 0L
+                    createdAt = doc.getTimestamp("createdAt")?.toDate()?.time
+                        ?: doc.getLong("createdAt") ?: 0L
                 )
-            }
+            }.sortedByDescending { it.createdAt }
     }.getOrDefault(emptyList())
 
     suspend fun approvePost(postId: String) {

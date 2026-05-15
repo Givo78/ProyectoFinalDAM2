@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/functions.php';
+$hideSidebar = true;
 require_once 'includes/header.php';
 ?>
 
